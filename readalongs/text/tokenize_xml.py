@@ -69,10 +69,16 @@ def tokenize_xml_in_place(xml):
 
         lang = get_lang_attrib(element)
         tokenizer = make_tokenizer(lang)
+
+        def is_word(unit):
+            # Some language inventories use a colon within words, but a colon
+            # on its own is punctuation and cannot be converted by g2p.
+            return unit.is_word and unit.text != ":"
+
         if element.text:
             new_element.text = ""
             for unit in tokenizer.tokenize_text(element.text):
-                if unit.is_word:
+                if is_word(unit):
                     new_child_element = etree.Element("w", nsmap=nsmap)
                     new_child_element.text = unit.text
                     new_element.append(new_child_element)
@@ -94,7 +100,7 @@ def tokenize_xml_in_place(xml):
             if child.tail:
                 # new_element.tail = ''  # in case it's a copy
                 for unit in tokenizer.tokenize_text(child.tail):
-                    if unit.is_word:
+                    if is_word(unit):
                         new_child_element = etree.Element("w")
                         new_child_element.text = unit.text
                         new_element.append(new_child_element)

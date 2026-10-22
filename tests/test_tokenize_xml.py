@@ -84,6 +84,33 @@ class TestTokenizer:
         # print(etree.tounicode(tokenized))
         assert etree.tounicode(tokenized) == ref
 
+    def test_standalone_colon_is_not_a_word(self):
+        """A standalone colon is punctuation, even when the tokenizer calls it a word"""
+        txt = '<s xml:lang="und">foo : bar</s>'
+        ref = '<s xml:lang="und"><w>foo</w> : <w>bar</w></s>'
+        xml = parse_xml(txt)
+        with redirect_stderr(StringIO()):
+            tokenized = tokenize_xml.tokenize_xml(xml)
+        assert etree.tounicode(tokenized) == ref
+
+    def test_colon_inside_word_is_preserved(self):
+        """Keep colons that are meaningful within a language's words"""
+        txt = '<s xml:lang="moh">atkèn:se</s>'
+        ref = '<s xml:lang="moh"><w>atkèn:se</w></s>'
+        xml = parse_xml(txt)
+        with redirect_stderr(StringIO()):
+            tokenized = tokenize_xml.tokenize_xml(xml)
+        assert etree.tounicode(tokenized) == ref
+
+    def test_standalone_colon_after_child_is_not_a_word(self):
+        """Apply standalone-colon handling to text following child elements"""
+        txt = '<s xml:lang="und"><span>foo</span> : bar</s>'
+        ref = '<s xml:lang="und"><span><w>foo</w></span> : <w>bar</w></s>'
+        xml = parse_xml(txt)
+        with redirect_stderr(StringIO()):
+            tokenized = tokenize_xml.tokenize_xml(xml)
+        assert etree.tounicode(tokenized) == ref
+
 
 if __name__ == "__main__":
     main(sys.argv)
